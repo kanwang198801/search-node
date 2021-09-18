@@ -40,6 +40,24 @@ export const searchUser = (
   });
 };
 
+export const searchUserByValues = (
+  usersData: userType[],
+  ticketsData: ticketType[],
+  term: userSearchTermEnum,
+  values: string[]
+): userType[] => {
+  const foundUsers = usersData.filter((user: userType) => {
+    const userKeyValue = String(user[term]).toLowerCase();
+    const isSearchMissingValue = !values.length && userKeyValue === 'undefined';
+    return isSearchMissingValue || values.map(value => value.trim().toLowerCase()).includes(userKeyValue);
+  });
+
+  return foundUsers.map(user => {
+    const tickets = ticketsData.filter((ticket: ticketType) => ticket?.assignee_id === user?._id);
+    return { ...user, tickets: tickets.map(ticket => ticket?.subject) };
+  });
+};
+
 export const searchTicket = (
   usersData: userType[],
   ticketsData: ticketType[],
@@ -54,6 +72,30 @@ export const searchTicket = (
       return isSearchMissingValue || ticket?.tags?.map(tag => tag.toLowerCase()).includes(searchValue);
     }
     return isSearchMissingValue || ticketKeyValue === searchValue;
+  });
+
+  return foundTickets.map(ticket => {
+    const foundUser = usersData.find((user: userType) => ticket?.assignee_id === user?._id);
+    return { ...ticket, assignee_name: foundUser?.name };
+  });
+};
+
+export const searchTicketByValues = (
+  usersData: userType[],
+  ticketsData: ticketType[],
+  term: ticketSearchTermEnum,
+  values: string[]
+): ticketType[] => {
+  const foundTickets = ticketsData.filter((ticket: ticketType) => {
+    const ticketKeyValue = String(ticket[term]).toLowerCase();
+    const isSearchMissingValue = !values.length && ticketKeyValue === 'undefined';
+    if (term.toLowerCase() === ticketSearchTermEnum.Tags) {
+      return (
+        isSearchMissingValue ||
+        values.find(value => ticket?.tags?.map(tag => tag.toLowerCase()).includes(value.toLowerCase()))
+      );
+    }
+    return isSearchMissingValue || values.map(value => value.trim().toLowerCase()).includes(ticketKeyValue);
   });
 
   return foundTickets.map(ticket => {

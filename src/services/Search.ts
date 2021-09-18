@@ -2,7 +2,15 @@ import MESSAGES from '../constants/message';
 import logger from '../utils/logger';
 import { userType, ticketType } from '../types/dataModel';
 import { searchTypeEnum, searchOptionsEnum, userSearchTermEnum, ticketSearchTermEnum } from '../types/enums';
-import { askQuestion, searchUser, searchTicket, getSearchableFields, printSearchResult } from '../utils/search';
+import {
+  askQuestion,
+  searchUser,
+  searchTicket,
+  getSearchableFields,
+  printSearchResult,
+  searchUserByValues,
+  searchTicketByValues,
+} from '../utils/search';
 
 class Search {
   private _searchType: searchTypeEnum | unknown;
@@ -63,7 +71,7 @@ class Search {
 
   private async searchTerm(): Promise<void> {
     while (true) {
-      this._term = (await askQuestion(MESSAGES.EnterSearchTerm)).trim() as string;
+      this._term = (await askQuestion(MESSAGES.EnterSearchTerm)).trim().toLowerCase() as string;
       if (
         (this._searchType === searchTypeEnum.Users &&
           Object.values(userSearchTermEnum).includes(this._term as userSearchTermEnum)) ||
@@ -84,9 +92,21 @@ class Search {
     logger.log(`Searching for ${this._searchType} ${this._term} with a value of ${this._value}`);
 
     if (this._searchType === searchTypeEnum.Users) {
-      searchResult = searchUser(this._usersData, this._ticketsData, this._term as userSearchTermEnum, this._value);
+      // searchResult = searchUser(this._usersData, this._ticketsData, this._term as userSearchTermEnum, this._value);
+      searchResult = searchUserByValues(
+        this._usersData,
+        this._ticketsData,
+        this._term as userSearchTermEnum,
+        this._value ? this._value.split(',') : []
+      );
     } else if (this._searchType === searchTypeEnum.Tickets) {
-      searchResult = searchTicket(this._usersData, this._ticketsData, this._term as ticketSearchTermEnum, this._value);
+      // searchResult = searchTicket(this._usersData, this._ticketsData, this._term as ticketSearchTermEnum, this._value);
+      searchResult = searchTicketByValues(
+        this._usersData,
+        this._ticketsData,
+        this._term as ticketSearchTermEnum,
+        this._value ? this._value.split(',') : []
+      );
     }
     if (!searchResult.length) {
       logger.log(MESSAGES.NoResult);
